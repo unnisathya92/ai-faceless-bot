@@ -1,0 +1,21 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-and-post",
+      "schedule": "0 */6 * * *"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database-url",
+    "JWT_SECRET": "@jwt-secret",
+    "ENCRYPTION_KEY": "@encryption-key",
+    "OPENAI_API_KEY": "@openai-api-key",
+    "KLING_AI_API_KEY": "@kling-ai-api-key",
+    "BLOB_READ_WRITE_TOKEN": "@blob-read-write-token",
+    "TELEGRAM_BOT_TOKEN": "@telegram-bot-token",
+    "TELEGRAM_CHAT_ID": "@telegram-chat-id",
+    "CRON_SECRET": "@cron-secret"
+  },
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install"
+}

@@ -1,0 +1,261 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User/Admin authentication
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // Hashed password
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Platform accounts (Twitter, Instagram, TikTok, etc.)
+model Account {
+  id              String   @id @default(cuid())
+  platform        Platform
+  username        String?
+  isActive        Boolean  @default(true)
+  credentials     String   // Encrypted JSON containing API keys, tokens, etc.
+  settings        Json     @default("{}")
+  lastPostTime    DateTime?
+  totalPosts      Int      @default(0)
+  status          AccountStatus @default(ACTIVE)
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  posts           Post[]
+  analytics       Analytics[]
+
+  @@unique([platform, username])
+  @@index([platform])
+  @@index([isActive])
+}
+
+// Video records
+model Video {
+  id              String      @id @default(cuid())
+  prompt          String      @db.Text
+  klingJobId      String?     @unique
+  fileUrl         String?
+  thumbnailUrl    String?
+  duration        Int?        // in seconds
+  status          VideoStatus @default(PENDING)
+  errorMessage    String?
+  metadata        Json        @default("{}")
+  generatedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  posts           Post[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Social media posts
+model Post {
+  id              String     @id @default(cuid())
+  videoId         String
+  accountId       String
+  platform        Platform
+  postUrl         String?
+  postId          String?    // Platform-specific post ID
+  caption         String?    @db.Text
+  hashtags        String[]
+  status          PostStatus @default(PENDING)
+  errorMessage    String?
+  scheduledFor    DateTime?
+  postedAt        DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  video           Video      @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  account         Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  analytics       Analytics[]
+
+  @@index([videoId])
+  @@index([accountId])
+  @@index([platform])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+// Analytics for posts
+model Analytics {
+  id              String   @id @default(cuid())
+  postId          String
+  accountId       String
+  platform        Platform
+  views           Int      @default(0)
+  likes           Int      @default(0)
+  shares          Int      @default(0)
+  comments        Int      @default(0)
+  saves           Int      @default(0)
+  engagement      Float    @default(0) // Calculated engagement rate
+  revenue         Float    @default(0) // From creator fund, etc.
+  lastFetchedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([postId])
+  @@index([accountId])
+  @@index([platform])
+  @@index([createdAt])
+}
+
+// Trending topics and prompts
+model TrendingTopic {
+  id              String   @id @default(cuid())
+  topic           String
+  keywords        String[]
+  source          String   // Where the trend was discovered
+  score           Float    @default(0)
+  used            Boolean  @default(false)
+  usedInVideoId   String?
+  createdAt       DateTime @default(now())
+
+  @@index([used])
+  @@index([createdAt])
+}
+
+// System settings and configuration
+model SystemConfig {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           String   @db.Text
+  description     String?
+  updatedAt       DateTime @updatedAt
+}
+
+// Job queue for video generation and posting
+model JobQueue {
+  id              String      @id @default(cuid())
+  type            JobType
+  status          JobStatus   @default(PENDING)
+  payload         Json
+  result          Json?
+  priority        Int         @default(0)
+  attempts        Int         @default(0)
+  maxAttempts     Int         @default(3)
+  error           String?
+  scheduledFor    DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+// Notification log
+model Notification {
+  id              String           @id @default(cuid())
+  type            NotificationType
+  title           String
+  message         String           @db.Text
+  status          String           @default("sent")
+  metadata        Json             @default("{}")
+  createdAt       DateTime         @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+// API usage tracking
+model ApiUsage {
+  id              String   @id @default(cuid())
+  service         String   // openai, kling, etc.
+  endpoint        String?
+  tokens          Int      @default(0)
+  cost            Float    @default(0)
+  requestData     Json?
+  responseData    Json?
+  createdAt       DateTime @default(now())
+
+  @@index([service])
+  @@index([createdAt])
+}
+
+// Enums
+enum Platform {
+  TWITTER
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  FACEBOOK
+  SNAPCHAT
+  PINTEREST
+  LINKEDIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  ERROR
+  RATE_LIMITED
+  CREDENTIALS_INVALID
+  DISABLED
+}
+
+enum VideoStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  PROCESSING
+}
+
+enum PostStatus {
+  PENDING
+  SCHEDULED
+  POSTING
+  POSTED
+  FAILED
+  SKIPPED
+}
+
+enum JobType {
+  GENERATE_PROMPT
+  GENERATE_VIDEO
+  POST_VIDEO
+  FETCH_ANALYTICS
+  CLEANUP
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum NotificationType {
+  VIDEO_GENERATED
+  POST_SUCCESS
+  POST_FAILED
+  VIRAL_ALERT
+  ERROR_ALERT
+  DAILY_SUMMARY
+  CREDIT_WARNING
+}

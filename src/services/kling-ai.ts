@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { retryWithBackoff } from '@/lib/utils'
 
-const KLING_API_KEY = process.env.KLING_AI_API_KEY
+const KLING_ACCESS_KEY = process.env.KLING_AI_ACCESS_KEY
+const KLING_SECRET_KEY = process.env.KLING_AI_SECRET_KEY
 const KLING_API_URL = process.env.KLING_AI_API_URL || 'https://api.kling.ai/v1'
 
 export interface KlingVideoRequest {
@@ -22,14 +23,16 @@ export interface KlingVideoResponse {
 }
 
 class KlingAIService {
-  private apiKey: string
+  private accessKey: string
+  private secretKey: string
   private baseUrl: string
 
   constructor() {
-    if (!KLING_API_KEY) {
-      throw new Error('KLING_AI_API_KEY is not configured')
+    if (!KLING_ACCESS_KEY || !KLING_SECRET_KEY) {
+      throw new Error('KLING_AI_ACCESS_KEY and KLING_AI_SECRET_KEY are not configured')
     }
-    this.apiKey = KLING_API_KEY
+    this.accessKey = KLING_ACCESS_KEY
+    this.secretKey = KLING_SECRET_KEY
     this.baseUrl = KLING_API_URL
   }
 
@@ -50,7 +53,8 @@ class KlingAIService {
           },
           {
             headers: {
-              'Authorization': `Bearer ${this.apiKey}`,
+              'X-Api-Key': this.accessKey,
+              'X-Api-Secret': this.secretKey,
               'Content-Type': 'application/json',
             },
           }
@@ -77,7 +81,8 @@ class KlingAIService {
         `${this.baseUrl}/videos/status/${jobId}`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            'X-Api-Key': this.accessKey,
+            'X-Api-Secret': this.secretKey,
           },
         }
       )
@@ -125,7 +130,8 @@ class KlingAIService {
         `${this.baseUrl}/account/credits`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            'X-Api-Key': this.accessKey,
+            'X-Api-Secret': this.secretKey,
           },
         }
       )

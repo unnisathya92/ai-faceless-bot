@@ -145,10 +145,11 @@ OPENAI_API_KEY="sk-..."
 1. Visit [Kling AI](https://klingai.com)
 2. Sign up and verify email
 3. Go to API section
-4. Generate API key
+4. Generate Access Key and Secret Key
 5. Add to `.env`:
 ```env
-KLING_AI_API_KEY="your-kling-key"
+KLING_AI_ACCESS_KEY="your-access-key"
+KLING_AI_SECRET_KEY="your-secret-key"
 KLING_AI_API_URL="https://api.kling.ai/v1"
 ```
 
@@ -287,7 +288,8 @@ DATABASE_URL
 JWT_SECRET
 ENCRYPTION_KEY
 OPENAI_API_KEY
-KLING_AI_API_KEY
+KLING_AI_ACCESS_KEY
+KLING_AI_SECRET_KEY
 TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID
 CRON_SECRET

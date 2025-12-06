@@ -6,13 +6,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 // User/Admin authentication
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   username  String   @unique
   password  String   // Hashed password
   role      String   @default("admin")
@@ -22,12 +22,12 @@ model User {
 
 // Platform accounts (Twitter, Instagram, TikTok, etc.)
 model Account {
-  id              String   @id @default(cuid())
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
   platform        Platform
   username        String?
   isActive        Boolean  @default(true)
   credentials     String   // Encrypted JSON containing API keys, tokens, etc.
-  settings        Json     @default("{}")
+  settings        Json
   lastPostTime    DateTime?
   totalPosts      Int      @default(0)
   status          AccountStatus @default(ACTIVE)
@@ -39,22 +39,21 @@ model Account {
   posts           Post[]
   analytics       Analytics[]
 
-  @@unique([platform, username])
   @@index([platform])
   @@index([isActive])
 }
 
 // Video records
 model Video {
-  id              String      @id @default(cuid())
-  prompt          String      @db.Text
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  prompt          String
   klingJobId      String?     @unique
   fileUrl         String?
   thumbnailUrl    String?
   duration        Int?        // in seconds
   status          VideoStatus @default(PENDING)
   errorMessage    String?
-  metadata        Json        @default("{}")
+  metadata        Json
   generatedAt     DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -68,13 +67,13 @@ model Video {
 
 // Social media posts
 model Post {
-  id              String     @id @default(cuid())
-  videoId         String
-  accountId       String
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  videoId         String     @db.ObjectId
+  accountId       String     @db.ObjectId
   platform        Platform
   postUrl         String?
   postId          String?    // Platform-specific post ID
-  caption         String?    @db.Text
+  caption         String?
   hashtags        String[]
   status          PostStatus @default(PENDING)
   errorMessage    String?
@@ -97,9 +96,9 @@ model Post {
 
 // Analytics for posts
 model Analytics {
-  id              String   @id @default(cuid())
-  postId          String
-  accountId       String
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId          String   @unique @db.ObjectId
+  accountId       String   @db.ObjectId
   platform        Platform
   views           Int      @default(0)
   likes           Int      @default(0)
@@ -116,7 +115,6 @@ model Analytics {
   post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@unique([postId])
   @@index([accountId])
   @@index([platform])
   @@index([createdAt])
@@ -124,7 +122,7 @@ model Analytics {
 
 // Trending topics and prompts
 model TrendingTopic {
-  id              String   @id @default(cuid())
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
   topic           String
   keywords        String[]
   source          String   // Where the trend was discovered
@@ -139,16 +137,16 @@ model TrendingTopic {
 
 // System settings and configuration
 model SystemConfig {
-  id              String   @id @default(cuid())
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
   key             String   @unique
-  value           String   @db.Text
+  value           String
   description     String?
   updatedAt       DateTime @updatedAt
 }
 
 // Job queue for video generation and posting
 model JobQueue {
-  id              String      @id @default(cuid())
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
   type            JobType
   status          JobStatus   @default(PENDING)
   payload         Json
@@ -170,12 +168,12 @@ model JobQueue {
 
 // Notification log
 model Notification {
-  id              String           @id @default(cuid())
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
   type            NotificationType
   title           String
-  message         String           @db.Text
+  message         String
   status          String           @default("sent")
-  metadata        Json             @default("{}")
+  metadata        Json
   createdAt       DateTime         @default(now())
 
   @@index([type])
@@ -184,7 +182,7 @@ model Notification {
 
 // API usage tracking
 model ApiUsage {
-  id              String   @id @default(cuid())
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
   service         String   // openai, kling, etc.
   endpoint        String?
   tokens          Int      @default(0)

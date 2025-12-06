@@ -23,13 +23,23 @@ interface PlatformStat {
   posts: number
 }
 
+interface ServiceStatus {
+  telegram: { configured: boolean }
+  openai: { configured: boolean }
+  klingAI: { configured: boolean }
+  blob: { configured: boolean }
+  twitter: { configured: boolean }
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [platformStats, setPlatformStats] = useState<PlatformStat[]>([])
+  const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchAnalytics()
+    fetchServiceStatus()
     const interval = setInterval(fetchAnalytics, 30000) // Refresh every 30s
     return () => clearInterval(interval)
   }, [])
@@ -44,6 +54,16 @@ export default function DashboardPage() {
       console.error('Failed to fetch analytics:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchServiceStatus = async () => {
+    try {
+      const res = await fetch('/api/status')
+      const data = await res.json()
+      setServiceStatus(data)
+    } catch (error) {
+      console.error('Failed to fetch service status:', error)
     }
   }
 
@@ -260,8 +280,8 @@ export default function DashboardPage() {
                       <p className="font-medium">Notifications</p>
                       <p className="text-sm text-muted-foreground">Telegram bot</p>
                     </div>
-                    <Badge variant={process.env.TELEGRAM_BOT_TOKEN ? "success" : "warning"}>
-                      {process.env.TELEGRAM_BOT_TOKEN ? "Connected" : "Not Configured"}
+                    <Badge variant={serviceStatus?.telegram?.configured ? "success" : "warning"}>
+                      {serviceStatus?.telegram?.configured ? "Connected" : "Not Configured"}
                     </Badge>
                   </div>
                 </div>

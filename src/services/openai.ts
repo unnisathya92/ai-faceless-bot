@@ -26,6 +26,15 @@ export interface VideoPromptResult {
 
 class OpenAIService {
   /**
+   * Helper to extract JSON from markdown code blocks
+   */
+  private extractJSON(content: string): string {
+    // Remove markdown code blocks if present
+    const match = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    return match ? match[1] : content
+  }
+
+  /**
    * Research trending topics using GPT-4
    */
   async researchTrendingTopics(niche?: string): Promise<TrendingTopicResult[]> {
@@ -68,7 +77,8 @@ class OpenAIService {
       })
 
       const content = response.choices[0]?.message?.content || '[]'
-      const topics = JSON.parse(content)
+      const cleanedContent = this.extractJSON(content.trim())
+      const topics = JSON.parse(cleanedContent)
       return topics
     } catch (error: any) {
       console.error('Trending topics research error:', error)
@@ -130,7 +140,8 @@ class OpenAIService {
       })
 
       const content = response.choices[0]?.message?.content || '{}'
-      const result = JSON.parse(content)
+      const cleanedContent = this.extractJSON(content.trim())
+      const result = JSON.parse(cleanedContent)
       return result
     } catch (error: any) {
       console.error('Video prompt generation error:', error)

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     console.log('Starting automated content generation...')
 
     // Step 1: Research trending topics
-    const topics = await openAIService.researchTrendingTopics()
+    const topics = await openAIService.researchTrendingTopics('true crime mysteries and unexplained phenomena')
 
     if (topics.length === 0) {
       return NextResponse.json({ error: 'No trending topics found' }, { status: 500 })

@@ -382,18 +382,20 @@ vercel logs --follow
 
 ### Enable Automated Posting
 
-The cron job is automatically configured in `vercel.json` to run every 6 hours:
+The cron job is automatically configured in `vercel.json` to run daily at 12:00 PM UTC:
 
 ```json
 {
   "crons": [
     {
       "path": "/api/cron/generate-and-post",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }
 ```
+
+> **Note**: Vercel Hobby plan only supports daily cron jobs. To run more frequently (e.g., every 6 hours), upgrade to Vercel Pro ($20/month).
 
 To test the cron job manually:
 
@@ -414,7 +416,8 @@ curl -X GET \
 ### Scaling Tips
 
 1. **Increase Posting Frequency**:
-   - Edit `vercel.json` cron schedule
+   - Upgrade to Vercel Pro to run cron jobs more frequently
+   - Edit `vercel.json` cron schedule (e.g., `0 */6 * * *` for every 6 hours)
    - Ensure sufficient API credits
 
 2. **Add More Platforms**:
